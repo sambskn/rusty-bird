@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::bird::{BirdGenInputs, generate_bird_mesh};
+use crate::bird::{BirdGenInputs, generate_bird_body_mesh, generate_bird_head_mesh};
 
 mod bird;
 
@@ -33,7 +33,12 @@ fn spawn_debug_mesh(
     });
 
     commands.spawn((
-        Mesh3d(meshes.add(generate_bird_mesh(BirdGenInputs::default()))),
+        Mesh3d(meshes.add(generate_bird_head_mesh(BirdGenInputs::default()))),
+        MeshMaterial3d(basic_material.clone()),
+        Transform::from_xyz(0.0, 0.0, 0.0),
+    ));
+    commands.spawn((
+        Mesh3d(meshes.add(generate_bird_body_mesh(BirdGenInputs::default()))),
         MeshMaterial3d(basic_material),
         Transform::from_xyz(0.0, 0.0, 0.0),
     ));
