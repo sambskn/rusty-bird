@@ -28,7 +28,7 @@ fn spawn_debug_mesh(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let basic_material = materials.add(StandardMaterial {
-        base_color: Color::srgb(0.8, 0.6, 0.5),
+        base_color: Color::srgb(0.83, 0.26, 0.17),
         ..default()
     });
 
