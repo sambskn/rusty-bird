@@ -4,6 +4,11 @@ use bevy_egui::{EguiContexts, EguiPlugin, EguiPrimaryContextPass, egui};
 
 mod bird;
 
+const BG_COLOR: Color = Color::srgb(0.47, 0.69, 0.48);
+
+#[derive(Message, Debug)]
+struct RebuildBird;
+
 fn main() {
     App::new()
         .add_plugins(
@@ -18,40 +23,99 @@ fn main() {
             }),
         )
         .add_plugins(EguiPlugin::default())
-        .insert_resource(ClearColor(Color::srgb(0.35, 0.69, 0.36)))
-        .add_systems(Startup, (spawn_camera_and_light, spawn_debug_mesh))
-        .add_systems(Update, camera_update)
+        .add_message::<RebuildBird>()
+        .insert_resource(ClearColor(BG_COLOR))
+        .insert_resource(BirdGenInputs::default())
+        .add_systems(Startup, (spawn_camera_and_light, spawn_bird_mesh))
+        .add_systems(Update, (camera_update, handle_bird_rebuild))
         .add_systems(EguiPrimaryContextPass, ui_example_system)
         .run();
 }
 
-fn ui_example_system(mut contexts: EguiContexts) -> Result {
-    egui::Window::new("birdgen").show(contexts.ctx_mut()?, |ui| {
-        ui.label("~~settings here soon~~");
-        ui.label("ported/inspired by bird-o-matic by mooncactus")
-    });
+fn ui_example_system(
+    mut contexts: EguiContexts,
+    mut bird_inputs: ResMut<BirdGenInputs>,
+    mut remake_the_bird: MessageWriter<RebuildBird>,
+) -> Result {
+    egui::SidePanel::left("left_panel")
+        .resizable(true)
+        .show(contexts.ctx_mut().unwrap(), |ui| {
+            ui.add(egui::Slider::new(&mut bird_inputs.beak_length, 0.0..=50.0).text("Beak Length"));
+
+            if ui.button("regenerate bird").clicked() {
+                remake_the_bird.write(RebuildBird);
+            }
+
+            ui.label("ported/inspired by bird-o-matic by mooncactus");
+            ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
+        })
+        .response
+        .rect
+        .width();
+
     Ok(())
 }
 
-fn spawn_debug_mesh(
+fn handle_bird_rebuild(
+    mut bird_rebuild_message: MessageReader<RebuildBird>,
+    bird_mesh_query: Query<Entity, With<BirdMesh>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    bird_inputs: Res<BirdGenInputs>,
+) {
+    let current_bird_inputs = bird_inputs.into_inner();
+    for _bird_rebuild_event in bird_rebuild_message.read() {
+        // kill all bird meshes
+        for brid_mesh_entity in bird_mesh_query {
+            commands.entity(brid_mesh_entity).despawn();
+        }
+        // now make new ones and spawn em
+        let basic_material = materials.add(StandardMaterial {
+            base_color: Color::srgb(0.83, 0.26, 0.17),
+            ..default()
+        });
+
+        commands.spawn((
+            Mesh3d(meshes.add(generate_bird_head_mesh(current_bird_inputs))),
+            MeshMaterial3d(basic_material.clone()),
+            Transform::from_xyz(0.0, 0.0, 0.0),
+            BirdMesh,
+        ));
+        commands.spawn((
+            Mesh3d(meshes.add(generate_bird_body_mesh(current_bird_inputs))),
+            MeshMaterial3d(basic_material),
+            Transform::from_xyz(0.0, 0.0, 0.0),
+            BirdMesh,
+        ));
+    }
+}
+
+#[derive(Component)]
+struct BirdMesh;
+
+fn spawn_bird_mesh(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    bird_inputs: Res<BirdGenInputs>,
 ) {
     let basic_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.83, 0.26, 0.17),
         ..default()
     });
-
+    let current_bird_inputs = bird_inputs.into_inner();
     commands.spawn((
-        Mesh3d(meshes.add(generate_bird_head_mesh(BirdGenInputs::default()))),
+        Mesh3d(meshes.add(generate_bird_head_mesh(current_bird_inputs))),
         MeshMaterial3d(basic_material.clone()),
         Transform::from_xyz(0.0, 0.0, 0.0),
+        BirdMesh,
     ));
     commands.spawn((
-        Mesh3d(meshes.add(generate_bird_body_mesh(BirdGenInputs::default()))),
+        Mesh3d(meshes.add(generate_bird_body_mesh(current_bird_inputs))),
         MeshMaterial3d(basic_material),
         Transform::from_xyz(0.0, 0.0, 0.0),
+        BirdMesh,
     ));
 }
 

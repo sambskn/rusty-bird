@@ -1,60 +1,61 @@
-use bevy::mesh::Mesh;
+use bevy::{ecs::resource::Resource, mesh::Mesh};
 use csgrs::{mesh::plane::Plane, traits::CSG};
 type CSGMesh = csgrs::mesh::Mesh<()>;
 use bevy::log::info;
 
 // Inputs/descriptions copied from original Bird-o-matic .SCAD script (see referenced script at bottom of file)
 // [Ed. note: Made em all f32's for now]
+#[derive(Resource, Clone, Copy)]
 pub struct BirdGenInputs {
     // Length of the beak
-    beak_length: f32, // [0:50]
+    pub beak_length: f32, // [0:50]
     // Ratio relative to the head size
-    beak_size: f32, // [20:100]
+    pub beak_size: f32, // [20:100]
     // Width of the beak tip (0 is pointy)
-    beak_width: f32, // [0:25]
+    pub beak_width: f32, // [0:25]
     // Shape of the beak tip (lowest is flat)
-    beak_roundness: f32, // [10:200]
+    pub beak_roundness: f32, // [10:200]
 
     // Head diameter
-    head_size: f32, // [10:40]
+    pub head_size: f32, // [10:40]
     // Horizontal distance from head to main body
-    head_to_belly: f32, // [-20:50]
+    pub head_to_belly: f32, // [-20:50]
     // Size of the eyes
-    eye_size: f32, // [0:20]
+    pub eye_size: f32, // [0:20]
     // Head lateral offset
-    head_lateral_offset: f32, // [-15:15]
+    pub head_lateral_offset: f32, // [-15:15]
     // Head vertical height
-    head_level: f32, // [0:80]
+    pub head_level: f32, // [0:80]
     // Head horizontal rotation
-    head_yaw: f32, // [-45:45]
+    pub head_yaw: f32, // [-45:45]
     // Head vertical rotation (positive is upwards)
-    head_pitch: f32, // [-80:45]
+    pub head_pitch: f32, // [-80:45]
 
     // How long is the front body
-    belly_length: f32, // [10:100]
+    pub belly_length: f32, // [10:100]
     // Belly section size
-    belly_size: f32, // [20:60]
+    pub belly_size: f32, // [20:60]
     // Additional fatness ratio
-    belly_fat: f32, // [50:150]
+    pub belly_fat: f32, // [50:150]
 
     // Distance from main body center to bottom center
-    belly_to_bottom: f32, // [1:50]
+    pub belly_to_bottom: f32, // [1:50]
     // Bottom diameter
-    bottom_size: f32, // [5:50]
+    pub bottom_size: f32, // [5:50]
 
     // Tail length
-    tail_length: f32, //[0:100]
+    pub tail_length: f32, //[0:100]
     // How large is the tail
-    tail_width: f32, // [1:50]
+    pub tail_width: f32, // [1:50]
     // Tail horizontal rotation
-    tail_yaw: f32, // [-45:45]
+    pub tail_yaw: f32, // [-45:45]
     // Tail vertical angle (positive is upwards)
-    tail_pitch: f32, // [-45:90]
+    pub tail_pitch: f32, // [-45:90]
     // How round is the tail (lowest is flat)
-    tail_roundness: f32, // [10:200]
+    pub tail_roundness: f32, // [10:200]
 
     // How to cut the base of the object (-1 to disable, then use your own slicer options)
-    base_flat: f32, // [-100:100]
+    pub base_flat: f32, // [-100:100]
 }
 
 impl Default for BirdGenInputs {
@@ -101,7 +102,7 @@ const NONZERO_THICKNESS: f64 = 0.1; // used in place of 0 when we want parts of 
 // For now tho we'll just spawn two different meshes in Bevy, even though that would make printing it in 3d a bit harder.
 // We'll see!
 
-pub fn generate_bird_head_mesh(input: BirdGenInputs) -> Mesh {
+pub fn generate_bird_head_mesh(input: &BirdGenInputs) -> Mesh {
     // skull base for head
     let skull: CSGMesh = CSGMesh::sphere(
         input.head_size as f64 / 2.0,
@@ -189,7 +190,7 @@ pub fn generate_bird_head_mesh(input: BirdGenInputs) -> Mesh {
     head_in_place.rotate(-90.0, 180.0, 0.0).to_bevy_mesh()
 }
 
-pub fn generate_bird_body_mesh(input: BirdGenInputs) -> Mesh {
+pub fn generate_bird_body_mesh(input: &BirdGenInputs) -> Mesh {
     info!("Body step 1, neck and chest");
     let neck = CSGMesh::sphere(
         input.head_size as f64 / 2.0,
