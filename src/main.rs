@@ -32,21 +32,25 @@ fn main() {
         .add_plugins(EguiPlugin::default())
         .add_plugins(PanOrbitCameraPlugin)
         .add_message::<RebuildBird>()
-        .insert_state(BirdState::Loading)
+        .insert_state(BirdState::BirdVisible)
         .insert_resource(ClearColor(BG_COLOR))
         .insert_resource(BirdGenInputs::default())
-        .add_systems(Startup, (spawn_camera_and_light, spawn_bird_mesh))
+        .add_systems(Startup, (spawn_camera_and_light, kick_off_bird_load))
         .add_systems(Update, handle_bird_rebuild)
         .add_systems(OnEnter(BirdState::Loading), spawn_bird_mesh)
         .add_systems(EguiPrimaryContextPass, ui_example_system)
         .run();
 }
 
+// Don't want to wait for bird mesh to load before app does, so this kicks it off on startup a few frames later lol
+fn kick_off_bird_load(mut next_bird_state: ResMut<NextState<BirdState>>) {
+    next_bird_state.set(BirdState::Loading);
+}
+
 fn ui_example_system(
     mut contexts: EguiContexts,
     mut bird_inputs: ResMut<BirdGenInputs>,
     mut remake_the_bird: MessageWriter<RebuildBird>,
-    mut next_bird_state: ResMut<NextState<BirdState>>,
     bird_state: Res<State<BirdState>>,
 ) -> Result {
     egui::SidePanel::left("left_panel")
@@ -139,7 +143,6 @@ fn ui_example_system(
                 if *bird_state.get() == BirdState::BirdVisible {
                     if ui.button("regenerate bird").clicked() {
                         remake_the_bird.write(RebuildBird);
-                        next_bird_state.set(BirdState::Loading);
                     }
                 } else {
                     ui.label("generating bird...");
@@ -159,12 +162,16 @@ fn handle_bird_rebuild(
     mut bird_rebuild_message: MessageReader<RebuildBird>,
     bird_mesh_query: Query<Entity, With<BirdMesh>>,
     mut commands: Commands,
+    mut next_bird_state: ResMut<NextState<BirdState>>,
 ) {
     for _bird_rebuild_event in bird_rebuild_message.read() {
         // kill all bird meshes
         for brid_mesh_entity in bird_mesh_query {
+            info!("bird mesh kill");
             commands.entity(brid_mesh_entity).despawn();
         }
+        // now kick off the loading of fresh bird
+        next_bird_state.set(BirdState::Loading);
     }
 }
 
@@ -178,6 +185,7 @@ fn spawn_bird_mesh(
     mut next_bird_state: ResMut<NextState<BirdState>>,
     bird_inputs: Res<BirdGenInputs>,
 ) {
+    info!("time to spwn bird");
     let basic_material = materials.add(StandardMaterial {
         base_color: Color::srgb(0.83, 0.26, 0.17),
         ..default()
