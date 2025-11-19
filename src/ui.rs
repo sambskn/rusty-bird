@@ -44,7 +44,7 @@ impl Plugin for BirdUIPlugin {
 }
 
 #[derive(Component)]
-struct UiRoot;
+pub struct UiRoot;
 
 #[derive(Component)]
 struct RegenerateButton;
@@ -504,6 +504,7 @@ fn regenerate_button(asset_server: &AssetServer) -> impl Bundle {
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
             margin: UiRect::vertical(Val::Px(5.)),
+            padding: UiRect::vertical(Val::Px(5.)),
             border: UiRect::all(Val::Px(2.)),
             ..default()
         },

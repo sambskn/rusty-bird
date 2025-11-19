@@ -3,6 +3,7 @@ use crate::{
     ui::BirdUIPlugin,
 };
 use bevy::{
+    input::{mouse::MouseWheel, touch::Touch},
     input_focus::{InputDispatchPlugin, tab_navigation::TabNavigationPlugin},
     prelude::*,
 };
@@ -42,7 +43,7 @@ fn main() {
         .insert_resource(BirdGenInputs::default())
         .add_plugins(BirdUIPlugin)
         .add_systems(Startup, (spawn_camera_and_light, kick_off_bird_load))
-        .add_systems(Update, handle_bird_rebuild)
+        .add_systems(Update, (handle_bird_rebuild, touch_system, zoom_system))
         .add_systems(OnEnter(BirdState::Loading), spawn_bird_mesh)
         .run();
 }
@@ -117,4 +118,109 @@ fn spawn_camera_and_light(mut commands: Commands) {
             -0.2638357, 0.52681506, 0.1762679, 0.7885283,
         )),
     ));
+}
+
+const TOUCH_ADJUST_SPEED: f32 = 0.05;
+
+fn touch_system(
+    touches: Res<Touches>,
+    mut cam_query: Query<&mut Transform, With<Camera3d>>,
+    time: Res<Time>,
+) {
+    let mut rotate_intent = Vec2::ZERO;
+    for touch in touches.iter() {
+        rotate_intent += touch.position() - touch.previous_position()
+    }
+
+    if rotate_intent.length() > 0.05 {
+        for mut tf in cam_query.iter_mut() {
+            let origin = Vec3::ZERO;
+
+            // X swipe = orbit around Y axis (yaw)
+            let yaw_delta =
+                rotate_intent.x * std::f32::consts::PI * TOUCH_ADJUST_SPEED * time.delta_secs();
+
+            // Rotate position around the Y axis
+            let rotation = Quat::from_rotation_y(yaw_delta);
+            let offset = tf.translation - origin;
+            tf.translation = origin + rotation * offset;
+
+            // Rotate the camera to keep looking at origin
+            tf.look_at(origin, Vec3::Y);
+
+            // Y swipe = adjust pitch (tilt up/down)
+            let pitch_delta =
+                -rotate_intent.y * std::f32::consts::PI * TOUCH_ADJUST_SPEED * time.delta_secs();
+
+            // Calculate current pitch and clamp it
+            let forward = (origin - tf.translation).normalize();
+            let current_pitch = forward.y.asin();
+            let new_pitch = (current_pitch + pitch_delta).clamp(
+                -std::f32::consts::FRAC_PI_2 * 0.95,
+                std::f32::consts::FRAC_PI_2 * 0.95,
+            );
+            let actual_pitch_delta = new_pitch - current_pitch;
+
+            // Rotate around the right axis for pitch
+            let right = tf.right();
+            let pitch_rotation = Quat::from_axis_angle(*right, actual_pitch_delta);
+            let offset = tf.translation - origin;
+            tf.translation = origin + pitch_rotation * offset;
+            tf.look_at(origin, Vec3::Y);
+        }
+    }
+}
+
+const ZOOM_SPEED: f32 = 0.1;
+const ZOOM_MIN_DISTANCE: f32 = 2.0;
+const ZOOM_MAX_DISTANCE: f32 = 400.0;
+
+fn zoom_system(
+    mut mouse_wheel: MessageReader<MouseWheel>,
+    touches: Res<Touches>,
+    mut cam_query: Query<&mut Transform, With<Camera3d>>,
+    mut previous_pinch_distance: Local<Option<f32>>,
+) {
+    let mut zoom_delta = 0.0;
+
+    // Handle mouse wheel
+    for event in mouse_wheel.read() {
+        zoom_delta += event.y * ZOOM_SPEED;
+    }
+
+    // Handle pinch gestures
+    if touches.iter().count() == 2 {
+        let touch_vec: Vec<&Touch> = touches.iter().collect();
+        let touch1_pos = touch_vec[0].position();
+        let touch2_pos = touch_vec[1].position();
+
+        let current_distance = touch1_pos.distance(touch2_pos);
+
+        if let Some(prev_distance) = *previous_pinch_distance {
+            // Pinch in = zoom out, pinch out = zoom in
+            let pinch_delta = (prev_distance - current_distance) * 0.01;
+            zoom_delta -= pinch_delta;
+        }
+
+        *previous_pinch_distance = Some(current_distance);
+    } else {
+        *previous_pinch_distance = None;
+    }
+
+    // Apply zoom
+    if zoom_delta.abs() > 0.001 {
+        for mut tf in cam_query.iter_mut() {
+            let origin = Vec3::ZERO;
+            let direction = (tf.translation - origin).normalize();
+            let current_distance = tf.translation.distance(origin);
+
+            let new_distance =
+                (current_distance - zoom_delta).clamp(ZOOM_MIN_DISTANCE, ZOOM_MAX_DISTANCE);
+            tf.translation = origin + direction * new_distance;
+            info!(
+                "Zoom: delta={}, old_dist={}, new_dist={}",
+                zoom_delta, current_distance, new_distance
+            );
+        }
+    }
 }

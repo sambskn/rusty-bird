@@ -192,7 +192,6 @@ pub fn generate_bird_head_mesh(input: &BirdGenInputs) -> Mesh {
         SPHERE_STACKS,
         None,
     );
-    let mut head = skull.clone();
     info!("Skull done");
     // beak
     info!("Making the beak");
@@ -223,7 +222,7 @@ pub fn generate_bird_head_mesh(input: &BirdGenInputs) -> Mesh {
     );
     beak.renormalize();
     // guess what, head is the beak now
-    head = beak;
+    let mut head = beak;
 
     // eyes
     if input.eye_size > 0.0 {

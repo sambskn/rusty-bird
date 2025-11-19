@@ -1,5 +1,5 @@
-kind: wasmer.io/App.v0
 name: rustybird
+app_id: da_R8EIJtNUj9Pg
 owner: sambskn
 package: .
-app_id: da_R8EIJtNUj9Pg
+kind: wasmer.io/App.v0
