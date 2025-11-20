@@ -139,18 +139,36 @@ fn send_scroll_events(
 
 fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(ui_root(&asset_server));
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            top: px(16),
+            left: px(16),
+            ..default()
+        },
+        children![
+            Text::new("bird-o-matic"),
+            TextFont {
+                font: asset_server.load("fonts/OTBrut-Regular.ttf"),
+                font_size: 34.0,
+                ..default()
+            },
+            TextColor(TEXT_COLOR),
+        ],
+    ));
 }
 
 fn ui_root(asset_server: &AssetServer) -> impl Bundle {
     (
         Node {
             position_type: PositionType::Absolute,
-            left: Val::Px(12.),
-            top: Val::Px(12.),
-            width: Val::Px(300.),
-            height: Val::Percent(70.),
+            bottom: px(4),
+            left: px(24),
+            right: px(24),
+            min_width: vw(33),
+            max_height: vh(20),
             flex_direction: FlexDirection::Column,
-            padding: UiRect::all(Val::Px(10.)),
+            padding: UiRect::axes(px(30.), px(20)),
             overflow: Overflow::scroll_y(),
             ..default()
         },
@@ -372,7 +390,7 @@ fn section_header(asset_server: &AssetServer, title: &str) -> impl Bundle {
         },
         TextColor(TEXT_COLOR),
         Node {
-            margin: UiRect::top(Val::Px(10.)),
+            margin: UiRect::top(px(10)).with_bottom(px(4)),
             ..default()
         },
     )
@@ -382,8 +400,8 @@ fn separator() -> impl Bundle {
     (
         Node {
             width: Val::Percent(100.),
-            height: Val::Px(1.),
-            margin: UiRect::vertical(Val::Px(10.)),
+            height: px(1.),
+            margin: UiRect::vertical(px(16.)),
             ..default()
         },
         BackgroundColor(Color::srgb(0.3, 0.3, 0.3)),
@@ -405,7 +423,7 @@ where
         Node {
             width: Val::Percent(100.),
             flex_direction: FlexDirection::Column,
-            margin: UiRect::vertical(Val::Px(5.)),
+            margin: UiRect::vertical(px(5.)),
             min_height: px(LINE_HEIGHT),
             max_height: px(LINE_HEIGHT),
             ..default()
@@ -422,7 +440,7 @@ where
                 },
                 TextColor(TEXT_COLOR),
                 Node {
-                    margin: UiRect::bottom(Val::Px(3.)),
+                    margin: UiRect::bottom(px(3.)),
                     ..default()
                 },
             ),
@@ -434,7 +452,7 @@ where
                         flex_direction: FlexDirection::Column,
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Stretch,
-                        height: Val::Px(12.),
+                        height: px(12.),
                         width: Val::Percent(100.),
                         ..default()
                     },
@@ -449,21 +467,21 @@ where
                         // Slider background rail
                         (
                             Node {
-                                height: Val::Px(6.),
+                                height: px(6.),
                                 ..default()
                             },
                             BackgroundColor(SLIDER_TRACK),
-                            BorderRadius::all(Val::Px(3.)),
+                            BorderRadius::all(px(3.)),
                         ),
                         // Invisible track for thumb positioning
                         (
                             Node {
                                 display: Display::Flex,
                                 position_type: PositionType::Absolute,
-                                left: Val::Px(0.),
-                                right: Val::Px(12.),
-                                top: Val::Px(0.),
-                                bottom: Val::Px(0.),
+                                left: px(0.),
+                                right: px(12.),
+                                top: px(0.),
+                                bottom: px(0.),
                                 ..default()
                             },
                             children![
@@ -472,8 +490,8 @@ where
                                     SliderThumb,
                                     Node {
                                         display: Display::Flex,
-                                        width: Val::Px(12.),
-                                        height: Val::Px(12.),
+                                        width: px(12.),
+                                        height: px(12.),
                                         position_type: PositionType::Absolute,
                                         left: Val::Percent(0.),
                                         ..default()
@@ -500,12 +518,12 @@ fn regenerate_button(asset_server: &AssetServer) -> impl Bundle {
     (
         Node {
             width: Val::Percent(100.),
-            height: Val::Px(40.),
+            height: px(40.),
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
-            margin: UiRect::vertical(Val::Px(5.)),
-            padding: UiRect::vertical(Val::Px(5.)),
-            border: UiRect::all(Val::Px(2.)),
+            margin: UiRect::vertical(px(5.)),
+            padding: UiRect::vertical(px(5.)),
+            border: UiRect::all(px(2.)),
             ..default()
         },
         Button,
@@ -513,7 +531,7 @@ fn regenerate_button(asset_server: &AssetServer) -> impl Bundle {
         Hovered::default(),
         BackgroundColor(NORMAL_BUTTON),
         BorderColor::all(Color::BLACK),
-        BorderRadius::all(Val::Px(5.)),
+        BorderRadius::all(px(5.)),
         children![(
             Text::new("Regenerate Bird"),
             TextFont {
@@ -536,7 +554,7 @@ fn footer(asset_server: &AssetServer) -> impl Bundle {
         },
         TextColor(Color::srgb(0.6, 0.6, 0.6)),
         Node {
-            margin: UiRect::top(Val::Px(10.)),
+            margin: UiRect::top(px(10.)),
             ..default()
         },
     )
