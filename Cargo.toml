@@ -3,6 +3,8 @@ name = "rusty-bird"
 version = "0.1.0"
 edition = "2024"
 
+[patch.crates-io]
+getrandom = { git = "https://github.com/benfrankel/getrandom" }
 
 [dependencies]
 accesskit = "0.21.1"
@@ -10,6 +12,7 @@ bevy = { version = "0.17.2", features= ["experimental_bevy_ui_widgets"]}
 csgrs = { git = "https://github.com/sambskn/csgrs.git", branch="bump-geo", features=["bevymesh"] }
 geo = "0.31"
 geo-types = "0.7.17"
+rand = "0.9.2"
 
 [profile.release]
 # make small

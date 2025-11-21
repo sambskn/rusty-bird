@@ -4865,6 +4865,7 @@ dependencies = [
  "csgrs",
  "geo",
  "geo-types",
+ "rand 0.9.2",
 ]
 
 [[package]]
@@ -6765,3 +6766,8 @@ checksum = "29ce2c8a9384ad323cf564b67da86e21d3cfdff87908bc1223ed5c99bc792713"
 dependencies = [
  "zune-core",
 ]
+
+[[patch.unused]]
+name = "getrandom"
+version = "0.3.3"
+source = "git+https://github.com/benfrankel/getrandom#8df8846f07478cc3c6ace1fe32c193efe3f8a884"

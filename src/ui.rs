@@ -50,6 +50,9 @@ pub struct UiRoot;
 struct RegenerateButton;
 
 #[derive(Component)]
+struct RandomizeButton;
+
+#[derive(Component)]
 struct BirdInputSlider {
     input_type: BirdGenInputTypes,
 }
@@ -392,12 +395,82 @@ fn ui_root(asset_server: &AssetServer) -> impl Bundle {
                             }
                         ),
                     ),
+                    // Randomize Button
+                    (
+                        randomize_button(asset_server),
+                        observe(
+                            |_activate: On<Activate>,
+                             mut bird_inputs: ResMut<BirdGenInputs>,
+                             mut rebuild_writer: MessageWriter<RebuildBird>,
+                             bird_state: Res<State<BirdState>>| {
+                                if *bird_state.get() == BirdState::BirdVisible {
+                                    use rand::Rng;
+                                    let mut rng = rand::thread_rng();
+
+                                    bird_inputs.beak_length = rng.gen_range(0.0..=50.0);
+                                    bird_inputs.beak_size = rng.gen_range(20.0..=100.0);
+                                    bird_inputs.beak_width = rng.gen_range(0.0..=25.0);
+                                    bird_inputs.beak_roundness = rng.gen_range(10.0..=200.0);
+                                    bird_inputs.head_size = rng.gen_range(10.0..=40.0);
+                                    bird_inputs.head_to_belly = rng.gen_range(-20.0..=50.0);
+                                    bird_inputs.eye_size = rng.gen_range(0.0..=20.0);
+                                    bird_inputs.head_lateral_offset = rng.gen_range(-15.0..=15.0);
+                                    bird_inputs.head_level = rng.gen_range(0.0..=80.0);
+                                    bird_inputs.head_yaw = rng.gen_range(-45.0..=45.0);
+                                    bird_inputs.head_pitch = rng.gen_range(-80.0..=45.0);
+                                    bird_inputs.belly_length = rng.gen_range(10.0..=100.0);
+                                    bird_inputs.belly_size = rng.gen_range(20.0..=60.0);
+                                    bird_inputs.belly_fat = rng.gen_range(50.0..=150.0);
+                                    bird_inputs.belly_to_bottom = rng.gen_range(1.0..=50.0);
+                                    bird_inputs.bottom_size = rng.gen_range(5.0..=50.0);
+                                    bird_inputs.tail_length = rng.gen_range(0.0..=100.0);
+                                    bird_inputs.tail_width = rng.gen_range(1.0..=50.0);
+                                    bird_inputs.tail_yaw = rng.gen_range(-45.0..=45.0);
+                                    bird_inputs.tail_pitch = rng.gen_range(-45.0..=90.0);
+                                    bird_inputs.tail_roundness = rng.gen_range(10.0..=200.0);
+                                    bird_inputs.base_flat = rng.gen_range(-100.0..=100.0);
+
+                                    rebuild_writer.write(RebuildBird);
+                                }
+                            }
+                        ),
+                    ),
                     separator(),
                     // Footer
                     footer(asset_server),
                 ]
             ),
         ],
+    )
+}
+
+fn randomize_button(asset_server: &AssetServer) -> impl Bundle {
+    (
+        Node {
+            width: Val::Percent(100.),
+            min_height: px(40.),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            margin: UiRect::vertical(px(5.)),
+            padding: UiRect::axes(px(8.), px(16)),
+            border: UiRect::all(px(2.)),
+            ..default()
+        },
+        Button,
+        RandomizeButton,
+        Hovered::default(),
+        BackgroundColor(NORMAL_BUTTON),
+        BorderColor::all(Color::BLACK),
+        BorderRadius::all(px(5.)),
+        children![(
+            Text::new("Randomize"),
+            TextFont {
+                font: asset_server.load("fonts/OTBrut-Regular.ttf"),
+                font_size: 20.0,
+                ..default()
+            },
+            TextColor(TEXT_COLOR),
+        )],
     )
 }
 
@@ -591,7 +664,7 @@ fn update_button_style(
         ),
         (
             Or<(Changed<Hovered>, Added<InteractionDisabled>)>,
-            With<RegenerateButton>,
+            Or<(With<RegenerateButton>, With<RandomizeButton>)>,
         ),
     >,
 ) {
@@ -608,7 +681,7 @@ fn update_button_style2(
             &mut BackgroundColor,
             &mut BorderColor,
         ),
-        With<RegenerateButton>,
+        Or<(With<RegenerateButton>, With<RandomizeButton>)>,
     >,
     mut removed_disabled: RemovedComponents<InteractionDisabled>,
 ) {
