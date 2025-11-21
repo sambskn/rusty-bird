@@ -179,8 +179,8 @@ const SPHERE_STACKS: usize = RESOLUTION_PSUEDO_UNIT * 2;
 const NONZERO_THICKNESS: f64 = 0.1; // used in place of 0 when we want parts of the bird to approach an edge
 
 // Currently making separate head and body meshes,
-// Can't get a ncie result when doing a union between the head and body
-// (something in the csgrs Mesh union logic I think might be too aggresive at deleting triangles? -- armchair dev view lol)
+// Can't get a nice result when doing a union between the head and body
+// (something in the csgrs Mesh union logic I think might be too aggressive at deleting triangles? -- armchair dev view lol)
 // For now tho we'll just spawn two different meshes in Bevy, even though that would make printing it in 3d a bit harder.
 // We'll see!
 
@@ -231,8 +231,8 @@ pub fn generate_bird_head_mesh(input: &BirdGenInputs) -> Mesh {
             let eye: CSGMesh = CSGMesh::sphere(
                 input.eye_size as f64 / 2.0,
                 // half resolution sphere compared to skull
-                SPHERE_SEGMENTS / 2,
-                SPHERE_STACKS / 2,
+                SPHERE_SEGMENTS / 2 + 2,
+                SPHERE_STACKS / 2 + 2,
                 None,
             )
             .scale(1.0, 1.0, 0.5)
@@ -286,8 +286,8 @@ pub fn generate_bird_body_mesh(input: &BirdGenInputs) -> Mesh {
     );
     let chest = CSGMesh::sphere(
         input.belly_size as f64 / 2.0,
-        SPHERE_SEGMENTS + 1,
-        SPHERE_STACKS + 1,
+        SPHERE_SEGMENTS + 2,
+        SPHERE_STACKS + 2,
         None,
     )
     .scale(
@@ -330,15 +330,33 @@ pub fn generate_bird_body_mesh(input: &BirdGenInputs) -> Mesh {
     body = body_plus_tail;
     body.renormalize();
     info!("Body done");
+
     if input.base_flat > -100.0 {
-        info!("TODO:  Bird slice");
+        info!("Flattening base");
+        let total_len =
+            input.beak_length + input.head_to_belly + input.belly_to_bottom + input.tail_length;
+
+        // Calculate the cut height (in OpenSCAD's z-axis, which becomes Bevy's y-axis after rotation)
+        let cut_height = (input.belly_size * (-1.5 + input.base_flat / 200.0)) as f64;
+
+        // Create a large cube to subtract from the bottom
+        let cut_box = CSGMesh::cuboid(
+            (total_len * 10.0) as f64,
+            (total_len * 10.0) as f64,
+            input.belly_size as f64,
+            None,
+        )
+        .translate(0.0, 0.0, cut_height);
+
+        body = body.difference(&cut_box);
+        body.renormalize();
     }
+
     info!("Make bevy mesh");
 
     // add the x axis rotation to account for y up world we're rocking with in bevy
     body.rotate(-90.0, 180.0, 0.0).to_bevy_mesh()
 }
-
 /* From https://www.thingiverse.com/thing:139945/files
 
 // For Reference: The original Bird-o-Matic OpenSCAD code

@@ -187,7 +187,7 @@ fn ui_root(asset_server: &AssetServer) -> impl Bundle {
                 Node {
                     overflow: Overflow::scroll_y(),
                     flex_direction: FlexDirection::Column,
-                    padding: UiRect::axes(px(4), px(2)),
+                    padding: UiRect::axes(px(16), px(2)),
                     min_width: percent(80),
                     ..default()
                 },
@@ -372,6 +372,14 @@ fn ui_root(asset_server: &AssetServer) -> impl Bundle {
                         105.0
                     ),
                     separator(),
+                    slider(
+                        asset_server,
+                        |inputs, v| inputs.base_flat = v,
+                        BirdGenInputTypes::BaseFlat,
+                        -100.0,
+                        100.0,
+                        0.0
+                    ),
                 ]
             ),
             (
@@ -405,30 +413,31 @@ fn ui_root(asset_server: &AssetServer) -> impl Bundle {
                              bird_state: Res<State<BirdState>>| {
                                 if *bird_state.get() == BirdState::BirdVisible {
                                     use rand::Rng;
-                                    let mut rng = rand::thread_rng();
+                                    let mut rng = rand::rng();
 
-                                    bird_inputs.beak_length = rng.gen_range(0.0..=50.0);
-                                    bird_inputs.beak_size = rng.gen_range(20.0..=100.0);
-                                    bird_inputs.beak_width = rng.gen_range(0.0..=25.0);
-                                    bird_inputs.beak_roundness = rng.gen_range(10.0..=200.0);
-                                    bird_inputs.head_size = rng.gen_range(10.0..=40.0);
-                                    bird_inputs.head_to_belly = rng.gen_range(-20.0..=50.0);
-                                    bird_inputs.eye_size = rng.gen_range(0.0..=20.0);
-                                    bird_inputs.head_lateral_offset = rng.gen_range(-15.0..=15.0);
-                                    bird_inputs.head_level = rng.gen_range(0.0..=80.0);
-                                    bird_inputs.head_yaw = rng.gen_range(-45.0..=45.0);
-                                    bird_inputs.head_pitch = rng.gen_range(-80.0..=45.0);
-                                    bird_inputs.belly_length = rng.gen_range(10.0..=100.0);
-                                    bird_inputs.belly_size = rng.gen_range(20.0..=60.0);
-                                    bird_inputs.belly_fat = rng.gen_range(50.0..=150.0);
-                                    bird_inputs.belly_to_bottom = rng.gen_range(1.0..=50.0);
-                                    bird_inputs.bottom_size = rng.gen_range(5.0..=50.0);
-                                    bird_inputs.tail_length = rng.gen_range(0.0..=100.0);
-                                    bird_inputs.tail_width = rng.gen_range(1.0..=50.0);
-                                    bird_inputs.tail_yaw = rng.gen_range(-45.0..=45.0);
-                                    bird_inputs.tail_pitch = rng.gen_range(-45.0..=90.0);
-                                    bird_inputs.tail_roundness = rng.gen_range(10.0..=200.0);
-                                    bird_inputs.base_flat = rng.gen_range(-100.0..=100.0);
+                                    bird_inputs.beak_length = rng.random_range(0.0..=50.0);
+                                    bird_inputs.beak_size = rng.random_range(20.0..=100.0);
+                                    bird_inputs.beak_width = rng.random_range(0.0..=25.0);
+                                    bird_inputs.beak_roundness = rng.random_range(10.0..=200.0);
+                                    bird_inputs.head_size = rng.random_range(10.0..=40.0);
+                                    bird_inputs.head_to_belly = rng.random_range(-20.0..=50.0);
+                                    bird_inputs.eye_size = rng.random_range(0.0..=20.0);
+                                    bird_inputs.head_lateral_offset =
+                                        rng.random_range(-15.0..=15.0);
+                                    bird_inputs.head_level = rng.random_range(0.0..=80.0);
+                                    bird_inputs.head_yaw = rng.random_range(-45.0..=45.0);
+                                    bird_inputs.head_pitch = rng.random_range(-80.0..=45.0);
+                                    bird_inputs.belly_length = rng.random_range(10.0..=100.0);
+                                    bird_inputs.belly_size = rng.random_range(20.0..=60.0);
+                                    bird_inputs.belly_fat = rng.random_range(50.0..=150.0);
+                                    bird_inputs.belly_to_bottom = rng.random_range(1.0..=50.0);
+                                    bird_inputs.bottom_size = rng.random_range(5.0..=50.0);
+                                    bird_inputs.tail_length = rng.random_range(0.0..=100.0);
+                                    bird_inputs.tail_width = rng.random_range(1.0..=50.0);
+                                    bird_inputs.tail_yaw = rng.random_range(-45.0..=45.0);
+                                    bird_inputs.tail_pitch = rng.random_range(-45.0..=90.0);
+                                    bird_inputs.tail_roundness = rng.random_range(10.0..=200.0);
+                                    bird_inputs.base_flat = rng.random_range(-100.0..=100.0);
 
                                     rebuild_writer.write(RebuildBird);
                                 }
